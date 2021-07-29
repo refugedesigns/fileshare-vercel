@@ -3,8 +3,9 @@ import mongoose from "mongoose"
 
 const connectDB = async() => {
     
+    let mongooseConnection
     try {
-        await mongoose.connect(process.env.MONGODB_URI, {
+        mongooseConnection = await mongoose.connect(process.env.MONGODB_URI, {
                 useCreateIndex: true,
                 useNewUrlParser: true,
                 useFindAndModify: true,
@@ -19,6 +20,8 @@ const connectDB = async() => {
             console.log("connected to database")
         }
         connection.on("error", () => console.log("connection failed!"))
+
+        return mongooseConnection;
     
 }
 

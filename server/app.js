@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 
-import { v2 as cloudinary } from "cloudinary"
+import { v2 as cloudinary } from "cloudinary";
 
 import fileRouter from "./router/file-router.js";
 import connectDB from "./helpers/db.js";
@@ -35,7 +35,7 @@ app.use((error, req, res, next) => {
   res.status(status).json({ message: message, data: data });
 });
 
-connectDB();
+await connectDB();
 
 app.listen(process.env.PORT, () => {
   console.log("Server is running");

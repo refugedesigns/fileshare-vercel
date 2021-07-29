@@ -1,5 +1,8 @@
 import { v2 as cloudinary } from "cloudinary";
 import File from "../models/file.js";
+import mongoose from 'mongoose'
+
+
 
 export const postUpload = async (req, res, next) => {
   if (!req.file) {
@@ -41,3 +44,37 @@ export const postUpload = async (req, res, next) => {
       downloadLink: `${process.env.API_BASE_ENDPOINT_CLIENT}/download/${savedFile._id.toString()}`,
     });
 };
+
+export const getFile = async(req, res, next) => {
+  const id = req.params.id
+
+  let file;
+  try {
+    file = await File.findById({_id: mongoose.Types.ObjectId(id)})
+
+    console.log(file)
+      if(!file) {
+        const error = new Error("No file found!")
+        error.statusCode = 422
+        throw error
+      }
+  }catch(err) {
+    if(!err.statusCode) {
+      err.statusCode = 500
+      err.message = "Server Error!"
+      next(err)
+    }
+  }
+  
+
+  console.log(file)
+  const { filename, format, sizeInBytes } = file
+
+  res.status(200).json({
+    filename,
+    format,
+    sizeInBytes,
+    id: file._id.toString()
+  })
+
+}
