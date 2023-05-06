@@ -1,12 +1,12 @@
-import express from "express";
-import multer from "multer";
+const express = require("express");
+const multer = require("multer");
 
-import {
+const {
   postUpload,
   getFile,
   getDownload,
-  postLink
-} from "../controllers/file-controller.js";
+  postLink,
+} = require("../controllers/file-controller.js");
 
 const router = express.Router();
 
@@ -22,6 +22,6 @@ router.get("/:id", getFile);
 
 router.get("/download/:id", getDownload);
 
-router.post("/email", postLink)
+router.post("/email", postLink);
 
-export default router;
+module.exports =  router;

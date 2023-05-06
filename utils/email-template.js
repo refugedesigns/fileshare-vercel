@@ -1,5 +1,5 @@
 
-export default function emailTemplate (emailFrom, fileSize, downloadLink, filename) {
+module.exports = function emailTemplate (emailFrom, fileSize, downloadLink, filename) {
     return `<!doctype html>
 <html>
   <head>

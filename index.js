@@ -1,11 +1,12 @@
-import express from "express";
-import dotenv from "dotenv";
-import cors from "cors";
+const path = require("path")
+const express = require("express");
+const dotenv = require("dotenv");
+const cors = require("cors");
 
-import { v2 as cloudinary } from "cloudinary";
+const { v2: cloudinary } = require("cloudinary");
 
-import fileRouter from "./router/file-router.js";
-import connectDB from "./helpers/db.js";
+const fileRouter = require("./router/file-router.js");
+const connectDB = require("./helpers/db.js");
 
 const app = express();
 
@@ -24,8 +25,17 @@ app.use(
     extended: true,
   })
 );
+app.use(express.static(path.join(__dirname, "public", )))
 
 app.use("/api/files", fileRouter);
+
+app.get("/download/*", function (req, res) {
+  res.sendFile(path.join(__dirname, "public", "download", "[id].html"))
+})
+
+app.get("/*", function (req, res) {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+})
 
 app.use((error, req, res, next) => {
   console.log(error);
@@ -35,8 +45,10 @@ app.use((error, req, res, next) => {
   res.status(status).json({ message: message, data: data });
 });
 
-await connectDB();
-
+connectDB().then(() => {
 app.listen(process.env.PORT, () => {
   console.log("Server is running");
 });
+});
+
+

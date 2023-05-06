@@ -1,11 +1,13 @@
-import { v2 as cloudinary } from "cloudinary";
-import File from "../models/file.js";
-import mongoose from "mongoose";
-import https from "https";
-import nodemailer from "nodemailer";
-import emailTemplate from "../utils/email-template.js";
+const { v2: cloudinary } = require("cloudinary");
+const File = require("../models/file.js");
+const mongoose = require("mongoose");
+const https = require("https");
+const nodemailer = require("nodemailer");
+const emailTemplate = require("../utils/email-template.js");
+const sendEmail = require("../helpers/sendEmail.js");
 
-export const postUpload = async (req, res, next) => {
+const postUpload = async (req, res, next) => {
+  console.log(req.file);
   if (!req.file) {
     const error = new Error("Hey bro! We need the file!");
     error.statusCode = 422;
@@ -41,12 +43,12 @@ export const postUpload = async (req, res, next) => {
     message: "file uploaded successfully :)",
     id: savedFile._id,
     downloadLink: `${
-      process.env.API_BASE_ENDPOINT_CLIENT
+      process.env.BASE_URL
     }/download/${savedFile._id.toString()}`,
   });
 };
 
-export const getFile = async (req, res, next) => {
+const getFile = async (req, res, next) => {
   const id = req.params.id;
 
   let file;
@@ -78,7 +80,7 @@ export const getFile = async (req, res, next) => {
   });
 };
 
-export const getDownload = async (req, res, next) => {
+const getDownload = async (req, res, next) => {
   const id = req.params.id;
 
   let file;
@@ -102,14 +104,13 @@ export const getDownload = async (req, res, next) => {
   https.get(file.secure_url, (fileStream) => fileStream.pipe(res));
 };
 
-export const postLink = async (req, res, next) => {
+const postLink = async (req, res, next) => {
   const { id, emailFrom, emailTo } = req.body;
 
   let file;
   try {
     file = await File.findById({ _id: mongoose.Types.ObjectId(id) });
 
-    console.log(file);
     if (!file) {
       const error = new Error("No file found!");
       error.statusCode = 422;
@@ -123,15 +124,6 @@ export const postLink = async (req, res, next) => {
     }
   }
 
-  let transporter = nodemailer.createTransport({
-    host: process.env.MAILJET_SMTP_HOST,
-    port: process.env.MAILJET_SMTP_PORT,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: process.env.MAILJET_SMTP_USER, // generated ethereal user
-      pass: process.env.MAILJET_SMTP_PASSWORD, // generated ethereal password
-    },
-  });
 
   const { filename, sizeInBytes } = file;
 
@@ -140,22 +132,22 @@ export const postLink = async (req, res, next) => {
     process.env.API_BASE_ENDPOINT_CLIENT
   }/download/${file._id.toString()}`;
 
-  const mailOptions = {
-    from: emailFrom,
-    to: emailTo,
-    subject: "File shared with you",
-    text: `${emailFrom} shared a file with you`,
-    html: emailTemplate(emailFrom, fileSize, downloadLink, filename),
-  };
-
-  let info;
-  try {
-    info = await transporter.sendMail(mailOptions);
-  } catch (err) {
-    console.log(err);
-    return res.status(500).json({ message: "Server Error!" });
+  const emailInfo = {
+    fromEmail: emailFrom,
+    toEmail: emailTo,
+    subject: "Download your File",
+    url: downloadLink,
+    templateId: 2
   }
-  console.log(info);
+
+  try {
+    const sendFile = await sendEmail(emailInfo)
+    console.log(sendFile)
+  } catch (error) {
+    console.error(error)
+  }
+
+
 
   file.sender = emailFrom;
   file.receiver = emailTo;
@@ -163,4 +155,11 @@ export const postLink = async (req, res, next) => {
   await file.save();
 
   return res.status(200).json({ message: "Email sent successfully" });
+};
+
+module.exports = {
+  postUpload,
+  getDownload,
+  getFile,
+  postLink,
 };
